@@ -126,16 +126,46 @@ when input_qereset and input_qe < 0 then {
         set vert_cmd_arrow:show to true.
         set execute to true.
         lock throttle to thrott.
-        lock steering to target_steer.
     }else{
-        print "releasing control".
-        set finished to true.
+        print "releasing steering".
+        //set finished to true.
+        lock steering to target_steer.
         set execute to false.
     }
     
     set input_qereset to false.
     preserve.
 }
+
+
+// set astate to false.
+// lock input_ad to SHIP:CONTROL:PILOTYAW.
+// set input_adreset to true.
+
+// when input_ad = 0 then {
+    // set input_adreset to true.
+    // preserve.
+// }
+
+// when input_adreset and input_ad > 0 then {
+    // print "empty input slot".
+    // preserve.
+// }
+
+// when input_adreset and input_ad < 0 then {
+    // print "A pressed".
+   
+    // if not astate {
+        // print "state1".
+        // set astate to true.
+    // }else{
+        // print "state2".
+        // set astate to false.
+    // }
+    
+    // set input_adreset to false.
+    // preserve.
+// }
 
 lock input_hn to SHIP:CONTROL:PILOTFORE.
 set input_hnreset to true.
@@ -161,52 +191,52 @@ when  input_hn > 0 then {
     preserve.
 }
 
-lock input_ws to SHIP:CONTROL:PILOTTOP.
-set input_wsreset to true.
+lock input_ik to SHIP:CONTROL:PILOTTOP.
+set input_ikreset to true.
 
-when input_ws = 0 then {
-    set input_wsreset to true.
+when input_ik = 0 then {
+    set input_ikreset to true.
     preserve.
 }
 
-when  input_ws < 0 then {
+when  input_ik < 0 then {
     print "forw".
     set forw_speed_target to forw_speed_target+0.3.
     print "new forw_speed_target: "+forw_speed_target.
-    set input_wsreset to false.
+    set input_ikreset to false.
     preserve.
 }
 
-when  input_ws > 0 then {
+when  input_ik > 0 then {
     print "back".
     set forw_speed_target to forw_speed_target-0.3.
     print "new forw_speed_target: "+forw_speed_target.
-    set input_wsreset to false.
+    set input_ikreset to false.
     preserve.
 }
 
-lock input_ad to SHIP:CONTROL:PILOTSTARBOARD.
-set input_adreset to true.
+lock input_jl to SHIP:CONTROL:PILOTSTARBOARD.
+set input_jlreset to true.
 
-when input_ad = 0 then {
-    set input_adreset to true.
+when input_jl = 0 then {
+    set input_jlreset to true.
     preserve.
 }
 
-when  input_ad < 0 then {
+when  input_jl < 0 then {
     print "left".
     set side_speed_target to side_speed_target-0.3.
     print "new side_speed_target: "+side_speed_target.
-    set input_adreset to false.
+    set input_jlreset to false.
     preserve.
 }
 
-when  input_ad > 0 then {
+when  input_jl > 0 then {
     print "right".
 
     set side_speed_target to side_speed_target+0.3.
     print "new side_speed_target: "+side_speed_target.
-    set input_adreset to false.
+    set input_jlreset to false.
     preserve.
 }
 
