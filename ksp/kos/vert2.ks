@@ -99,6 +99,7 @@ SET thrott TO 0.
 
 set execute to false.
 set finished to false.
+set steercmd to false.
 
 lock input_qe to SHIP:CONTROL:PILOTROLL.
 set input_qereset to true.
@@ -121,16 +122,21 @@ when input_qereset and input_qe < 0 then {
     print "take control".
    
     if not execute {
-        print "taking control".
-        set horz_cmd_arrow:show to true.
-        set vert_cmd_arrow:show to true.
-        set execute to true.
-        lock throttle to thrott.
+        if not steercmd {
+            print "taking throttle control".
+            set horz_cmd_arrow:show to true.
+            set vert_cmd_arrow:show to true.
+            set execute to true.
+            lock throttle to thrott.
+        } else {
+            print "exiting".
+            set finished to true.
+        }
     }else{
-        print "releasing steering".
-        //set finished to true.
+        print "taking steering control".
         lock steering to target_steer.
         set execute to false.
+        set steercmd to true.
     }
     
     set input_qereset to false.
@@ -201,7 +207,7 @@ when input_ik = 0 then {
 
 when  input_ik < 0 then {
     print "forw".
-    set forw_speed_target to forw_speed_target+0.3.
+    set forw_speed_target to forw_speed_target-0.3.
     print "new forw_speed_target: "+forw_speed_target.
     set input_ikreset to false.
     preserve.
@@ -209,7 +215,7 @@ when  input_ik < 0 then {
 
 when  input_ik > 0 then {
     print "back".
-    set forw_speed_target to forw_speed_target-0.3.
+    set forw_speed_target to forw_speed_target+0.3.
     print "new forw_speed_target: "+forw_speed_target.
     set input_ikreset to false.
     preserve.
@@ -225,7 +231,7 @@ when input_jl = 0 then {
 
 when  input_jl < 0 then {
     print "left".
-    set side_speed_target to side_speed_target-0.3.
+    set side_speed_target to side_speed_target+0.3.
     print "new side_speed_target: "+side_speed_target.
     set input_jlreset to false.
     preserve.
@@ -234,7 +240,7 @@ when  input_jl < 0 then {
 when  input_jl > 0 then {
     print "right".
 
-    set side_speed_target to side_speed_target+0.3.
+    set side_speed_target to side_speed_target-0.3.
     print "new side_speed_target: "+side_speed_target.
     set input_jlreset to false.
     preserve.
@@ -243,12 +249,13 @@ when  input_jl > 0 then {
 set horz_cmd_arrow to vecdraw().
 set vert_cmd_arrow to vecdraw().
 set vertPID to PID_init( 0.196, 0.5999996775, 0.0102400055, -1, 1 ).
-set forwPID to PID_init( 0.2, 0.1, 0.001, -1, 1 ).
-set sidePID to PID_init( 0.2, 0.1, 0.001, -1, 1 ).
+set forwPID to PID_init( 0.25, 0.2, 0.001, -1, 1 ).
+set sidePID to PID_init( 0.25, 0.2, 0.001, -1, 1 ).
 set target_verts TO 0.
 set forw_speed_target TO 0.
 set side_speed_target TO 0.
 lock horz_spd to ship:surfacespeed.
+set target_steer to ship:up.
 
 until finished {
     set thrott to PID_seek( vertPID, target_verts, ship:verticalspeed ).
@@ -257,7 +264,10 @@ until finished {
     set side_speed to horz_spd*sin(horz_vel_heading).
     set forw_speed_cmd to PID_seek( forwPID, forw_speed_target, forw_speed ).
     set side_speed_cmd to PID_seek( sidePID, side_speed_target, side_speed ).
-    set target_steer to ship:up*r(forw_speed_cmd*15,0,0)*r(0,side_speed_cmd*15,0).
+    if steercmd {
+        set ship:control:top to (-1*forw_speed_cmd).
+        set ship:control:starboard to side_speed_cmd.
+    }
     set disp_vec to ship:north*r(0,arctan2(side_speed_target,-forw_speed_target),0):forevector.
     set tmpvec to V(side_speed_target,forw_speed_target,0).
     set disp_vec:mag to tmpvec:mag.
@@ -266,8 +276,11 @@ until finished {
     set disp_vec_vert:mag to target_verts.
     set vert_cmd_arrow:vec to disp_vec_vert.
     //print "intendedspd: "+(forw_speed_cmd*15).
+    //print "forwspd: "+forw_speed.
+    
     WAIT 0.001.
 }
 
 set ship:control:pilotmainthrottle to 0.
+set ship:control:neutralize to true.
 print "Finish...".
